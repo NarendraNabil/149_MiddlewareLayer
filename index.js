@@ -8,3 +8,11 @@ const app = express();
 const port = 3000;
 const { Pool } = pg;
 app.use(express.json());
+
+const pool = new Pool({
+  user: "postgres",
+  host: "localhost",
+  database: "mahasiswa",
+  password: "M0rtagol",
+  port: 5432,
+});
