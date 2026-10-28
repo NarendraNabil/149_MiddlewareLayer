@@ -128,3 +128,66 @@ app.post("/biodata", validateBody(biodataSchema), async (req, res) => {
 
   return successResponse(res, "Data Berhasil Ditambahkan", result.rows[0], 201);
 });
+
+app.put(
+  "/biodata/:id",
+  validateParams(idSchema),
+  validateBody(
+    biodataSchema
+      .fork(["nama", "nim", "kelas"], (field) => field.required())
+      .fork(["id"], (field) => field.forbidden()),
+  ),
+  async (req, res) => {
+    const { id } = req.params;
+    const { nama, nim, kelas } = req.body;
+
+    const result = await pool.query(
+      `UPDATE biodata
+      SET nama = $1, nim = $2, kelas = $3
+      WHERE id = $4
+      RETURNING *`,
+      [nama, nim, kelas, id],
+    );
+
+    if (result.rowCount === 0) {
+      return errorResponse(res, "Data tidak ditemukan", 404);
+    }
+
+    return successResponse(res, "Data Berhasil Diupdate", result.rows[0]);
+  },
+);
+
+app.delete("/biodata/:id", validateParams(idSchema), async (req, res) => {
+  const { id } = req.params;
+
+  const result = await pool.query(
+    "DELETE FROM biodata WHERE id = $1 RETURNING *",
+    [id],
+  );
+
+  if (result.rowCount === 0) {
+    return errorResponse(res, "Data tidak ditemukan", 404);
+  }
+
+  return successResponse(res, "Data Berhasil Dihapus", result.rows[0]);
+});
+
+// route tidak ditemukan
+app.use((req, res) => {
+  return errorResponse(res, "Endpoint tidak ditemukan", 404);
+});
+
+//global error handler
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  return errorResponse(res, "Terjadi kesalahan server", 500);
+});
+
+app.listen(port, () => {
+  console.log(`App running on port ${port}`);
+});
