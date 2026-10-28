@@ -88,3 +88,23 @@ function validateBody(schema) {
   };
 }
 
+//middleware untuk validasi parameter ID
+function validateParams(schema) {
+  return (req, res, next) => {
+    const { error, value } = schema.validate(req.params);
+
+    if (error) {
+      return errorResponse(
+        res,
+        "Oarameter tidak valid",
+        400,
+        error.details.map((item) => ({
+          field: item.path.join("."),
+          message: item.message,
+        })),
+      );
+    }
+    req.params = value;
+    next();
+  };
+}
